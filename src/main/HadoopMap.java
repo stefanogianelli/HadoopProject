@@ -1,6 +1,8 @@
 package main;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -27,8 +29,8 @@ public class HadoopMap extends MapReduceBase implements
 
 	@Override
 	public void map(LongWritable key, Text value,
-			OutputCollector<DataStructureWritable, IntWritable> output, Reporter reporter)
-			throws IOException {
+			OutputCollector<DataStructureWritable, IntWritable> output,
+			Reporter reporter) throws IOException {
 		line = value.toString();
 		matcher = p.matcher(line);
 		if (!matcher.matches() || NUM_FIELDS != matcher.groupCount()) {
@@ -36,14 +38,46 @@ public class HadoopMap extends MapReduceBase implements
 		} else {
 			String date = matcher.group(4).substring(0, 11);
 			String element = matcher.group(5);
+			String referer = matcher.group(8).equals("-") ? null : matcher
+					.group(8);
 			if (element.contains("wmv")) {
 				text.set("video_download");
-				output.collect(new DataStructureWritable(date, "video_downloads"), one);
+				output.collect(new DataStructureWritable(date,
+						"video_downloads"), one);
+				if (referer != null) {
+					output.collect(new DataStructureWritable(date, "referer"),
+							one);
+					try {
+						output.collect(
+								new DataStructureWritable(date, this
+										.getDomainName(referer)), one);
+					} catch (URISyntaxException e) {
+						System.err.println("Domain parsing failed");
+					}
+				}
 			} else if (element.contains("html")) {
 				text.set("web_pages");
-				output.collect(new DataStructureWritable(date, "page_views"), one);				
+				output.collect(new DataStructureWritable(date, "page_views"),
+						one);
+				if (referer != null) {
+					output.collect(new DataStructureWritable(date, "referer"),
+							one);
+					try {
+						output.collect(
+								new DataStructureWritable(date, this
+										.getDomainName(referer)), one);
+					} catch (URISyntaxException e) {
+						System.err.println("Domain parsing failed");
+					}
+				}
 			}
 		}
+	}
+
+	public String getDomainName(String url) throws URISyntaxException {
+		URI uri = new URI(url);
+		String domain = uri.getHost();
+		return domain.startsWith("www.") ? domain.substring(4) : domain;
 	}
 
 }
