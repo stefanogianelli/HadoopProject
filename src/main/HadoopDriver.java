@@ -30,6 +30,7 @@ public class HadoopDriver extends Configured implements Tool {
         job.setJobName("HadoopProject");
        
         job.setMapperClass(HadoopMap.class);
+        job.setCombinerClass(HadoopReduce.class);
         job.setReducerClass(HadoopReduce.class);
         
         job.setInputFormat(TextInputFormat.class);

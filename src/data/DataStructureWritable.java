@@ -4,22 +4,26 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
 
-public class DataStructureWritable implements WritableComparable<DataStructureWritable> {
-	
-	private Text date;
+import utils.DateUtils;
+
+public class DataStructureWritable implements
+		WritableComparable<DataStructureWritable> {
+
+	private LongWritable date;
 	private Text element;
-	
-	public DataStructureWritable () {
-		date = new Text();
+
+	public DataStructureWritable() {
+		date = new LongWritable();
 		element = new Text();
 	}
-	
-	public DataStructureWritable (String date, String element) {
-		this.date = new Text(date);
-		this.element = new Text(element);		
+
+	public DataStructureWritable(long date, String element) {
+		this.date = new LongWritable(date);
+		this.element = new Text(element);
 	}
 
 	@Override
@@ -35,34 +39,46 @@ public class DataStructureWritable implements WritableComparable<DataStructureWr
 	}
 
 	@Override
+	public boolean equals(Object o) {
+		if (!(o instanceof DataStructureWritable))
+			return false;
+		DataStructureWritable other = (DataStructureWritable) o;
+		if (this.getDate().equals(other.getDate())
+				&& this.getElement().equals(other.getElement()))
+			return true;
+		else
+			return false;
+	}
+
+	@Override
 	public int compareTo(DataStructureWritable o) {
 		if (o == null)
 			throw new NullPointerException();
-		else if (o.getDate().equals(this.getDate()) && o.getElement().equals(this.getElement()))
+		else if (this.equals(o))
 			return 0;
+		else if (this.getDate().compareTo(o.getDate()) >= 0)
+			return this.getElement().compareTo(o.getElement());
 		else
 			return -1;
-	}	
+	}
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((this.date == null) ? 0 : this.date.hashCode());
-		result = prime * result + ((this.element == null) ? 0 : this.element.hashCode());
-		return result;
+		int r1 = (this.getDate() == null) ? 0 : this.getDate().hashCode();
+		int r2 = (this.getElement() == null) ? 0 : this.getElement().hashCode();
+		return r1 + r2;
 	}
 
 	@Override
 	public String toString() {
-		return date + "\t" + element;
-	}	
+		return DateUtils.dateToString(date.get()) + "\t" + element;
+	}
 
-	public Text getDate() {
+	public LongWritable getDate() {
 		return date;
 	}
 
-	public void setDate(Text date) {
+	public void setDate(LongWritable date) {
 		this.date = date;
 	}
 

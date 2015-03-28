@@ -14,18 +14,20 @@ import org.apache.hadoop.mapred.Mapper;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.Reporter;
 
+import utils.DateUtils;
 import data.DataStructureWritable;
 
 public class HadoopMap extends MapReduceBase implements
 		Mapper<LongWritable, Text, DataStructureWritable, IntWritable> {
 
-	private Text text = new Text();
 	private final static IntWritable one = new IntWritable(1);
 	private final static int NUM_FIELDS = 9;
 	private final static String logPattern = "^([\\d.]+) (\\S+) (\\S+) \\[([\\w:/]+\\s[+\\-]\\d{4})\\] \"(.+?)\" (\\d{3}) (\\d+) \"([^\"]+)\" \"([^\"]+)\"";
 	private Pattern p = Pattern.compile(logPattern);
-	private String line;
+	private String line, domain;
 	private Matcher matcher;
+	private long start = DateUtils.stringToDate("22/Apr/2003");
+	private long end = DateUtils.stringToDate("30/May/2003");
 
 	@Override
 	public void map(LongWritable key, Text value,
@@ -36,40 +38,29 @@ public class HadoopMap extends MapReduceBase implements
 		if (!matcher.matches() || NUM_FIELDS != matcher.groupCount()) {
 			System.err.println("Bad log entry: " + line);
 		} else {
-			String date = matcher.group(4).substring(0, 11);
+			long date = DateUtils.stringToDate(matcher.group(4)
+					.substring(0, 11));
 			String element = matcher.group(5);
 			String referer = matcher.group(8).equals("-") ? null : matcher
 					.group(8);
 			if (element.contains("wmv")) {
-				text.set("video_download");
 				output.collect(new DataStructureWritable(date,
 						"video_downloads"), one);
-				if (referer != null) {
+				if (referer != null && start <= date && date <= end) {
 					output.collect(new DataStructureWritable(date, "referer"),
 							one);
 					try {
-						output.collect(
-								new DataStructureWritable(date, this
-										.getDomainName(referer)), one);
+						domain = this.getDomainName(referer);
 					} catch (URISyntaxException e) {
-						System.err.println("Domain parsing failed");
+						domain = null;
 					}
+					if (domain != null)
+						output.collect(new DataStructureWritable(date, domain),
+								one);
 				}
 			} else if (element.contains("html")) {
-				text.set("web_pages");
 				output.collect(new DataStructureWritable(date, "page_views"),
 						one);
-				if (referer != null) {
-					output.collect(new DataStructureWritable(date, "referer"),
-							one);
-					try {
-						output.collect(
-								new DataStructureWritable(date, this
-										.getDomainName(referer)), one);
-					} catch (URISyntaxException e) {
-						System.err.println("Domain parsing failed");
-					}
-				}
 			}
 		}
 	}
