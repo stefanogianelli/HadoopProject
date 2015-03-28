@@ -12,8 +12,10 @@ import org.apache.hadoop.mapred.Mapper;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.Reporter;
 
+import data.DataStructureWritable;
+
 public class HadoopMap extends MapReduceBase implements
-		Mapper<LongWritable, Text, Text, IntWritable> {
+		Mapper<LongWritable, Text, DataStructureWritable, IntWritable> {
 
 	private Text text = new Text();
 	private final static IntWritable one = new IntWritable(1);
@@ -25,20 +27,21 @@ public class HadoopMap extends MapReduceBase implements
 
 	@Override
 	public void map(LongWritable key, Text value,
-			OutputCollector<Text, IntWritable> output, Reporter reporter)
+			OutputCollector<DataStructureWritable, IntWritable> output, Reporter reporter)
 			throws IOException {
 		line = value.toString();
 		matcher = p.matcher(line);
 		if (!matcher.matches() || NUM_FIELDS != matcher.groupCount()) {
 			System.err.println("Bad log entry: " + line);
 		} else {
-			String [] parti = matcher.group(5).split(" ");
-			if (!parti[1].isEmpty() && parti[1].contains("Star_Wars_Kid.wmv") || parti[1].contains("Star_Wars_Kid_Remix.wmv")) {
+			String date = matcher.group(4).substring(0, 11);
+			String element = matcher.group(5);
+			if (element.contains("wmv")) {
 				text.set("video_download");
-				output.collect(text, one);
-			} else if (!parti[1].isEmpty() && parti[1].contains("html")) {
+				output.collect(new DataStructureWritable(date, "video_downloads"), one);
+			} else if (element.contains("html")) {
 				text.set("web_pages");
-				output.collect(text, one);				
+				output.collect(new DataStructureWritable(date, "page_views"), one);				
 			}
 		}
 	}
