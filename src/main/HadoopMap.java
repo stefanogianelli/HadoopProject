@@ -46,7 +46,7 @@ public class HadoopMap extends MapReduceBase implements
 			if (element.contains("wmv")) {
 				output.collect(new DataStructureWritable(date,
 						"video_downloads"), one);
-				if (referer != null && start <= date && date <= end) {
+				/*if (referer != null && start <= date && date <= end) {
 					output.collect(new DataStructureWritable(date, "referer"),
 							one);
 					try {
@@ -57,7 +57,7 @@ public class HadoopMap extends MapReduceBase implements
 					if (domain != null)
 						output.collect(new DataStructureWritable(date, domain),
 								one);
-				}
+				}*/
 			} else if (element.contains("html")) {
 				output.collect(new DataStructureWritable(date, "page_views"),
 						one);

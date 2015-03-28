@@ -2,6 +2,9 @@ package main;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -61,14 +64,35 @@ public class HadoopDriver extends Configured implements Tool {
 		FileStatus[] fss = fs.listStatus(new Path(args[1]));
 		for (FileStatus status : fss) {
 			Path path = status.getPath();
+			Map<String, HashMap<String,Double>> list = new LinkedHashMap<String, HashMap<String,Double>>();
 			BufferedReader br = new BufferedReader(new InputStreamReader(
 					fs.open(path)));
 			line = br.readLine();
 			while (line != null) {
-				System.out.println(line);
+				String [] split = line.split("\t");
+				if (list.containsKey(split[0])) {
+					list.get(split[0]).put(split[1], Double.parseDouble(split[2]));
+				} else {
+					HashMap<String,Double> val = new HashMap<String,Double>();
+					val.put(split[1], Double.parseDouble(split[2]));
+					list.put(split[0], val);
+				}
 				line = br.readLine();
 			}
-		}		
+			for (Map.Entry<String, HashMap<String,Double>> entry : list.entrySet()) {
+				System.out.println("Data: " + entry.getKey());
+				if (entry.getValue().containsKey("page_views"))
+					System.out.println("Pagine visitate: " + entry.getValue().get("page_views").doubleValue());
+				else
+					System.out.println("Pagine visitate: 0");
+				if (entry.getValue().containsKey("video_downloads"))
+					System.out.println("Video scaricati: " + entry.getValue().get("video_downloads").doubleValue());
+				else
+					System.out.println("Video scaricati: 0");
+			}
+		}
+		// Graph g = new Graph();
+		// g.displayGraph(g.makeChart().toURLString());
 		System.exit(res);
 	}
 
