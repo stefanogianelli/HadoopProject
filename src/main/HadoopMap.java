@@ -43,38 +43,37 @@ public class HadoopMap extends MapReduceBase implements
 				System.err.println("Bad log entry: " + line);
 				return;
 			}
-		}	
-			
-		long date = DateUtils.stringToDate(matcher.group(4)
-				.substring(0, 11));
+		}
+
+		long date = DateUtils.stringToDate(matcher.group(4).substring(0, 11));
 		String element = matcher.group(5);
-		String referer = matcher.group(8).equals("-") ? null : matcher
-				.group(8);
+		String referer = matcher.group(8).equals("-") ? null : matcher.group(8);
 		if (element.contains("wmv")) {
-			output.collect(new DataStructureWritable(date,
-					"video_downloads"), one);
-			/*if (referer != null && start <= date && date <= end) {
-				output.collect(new DataStructureWritable(date, "referer"),
-						one);
-				try {
-					domain = this.getDomainName(referer);
-				} catch (URISyntaxException e) {
-					domain = null;
-				}
-				if (domain != null)
-					output.collect(new DataStructureWritable(date, domain),
-							one);
-			}*/
-		} else if (element.contains("html")) {
-			output.collect(new DataStructureWritable(date, "page_views"),
+			output.collect(new DataStructureWritable(date, "video_downloads"),
 					one);
+			if (referer != null && start <= date && date <= end) {
+				output.collect(new DataStructureWritable(date, "referer"), one);
+				domain = this.getDomainName(referer);
+				if (domain != null)
+					output.collect(new DataStructureWritable(date, domain), one);
+			}
+		} else if (element.contains("html")) {
+			output.collect(new DataStructureWritable(date, "page_views"), one);
 		}
 	}
 
-	public String getDomainName(String url) throws URISyntaxException {
-		URI uri = new URI(url);
+	public String getDomainName(String url) {
+		URI uri;
+		try {
+			uri = new URI(url);
+		} catch (URISyntaxException e) {
+			return null;
+		}
 		String domain = uri.getHost();
-		return domain.startsWith("www.") ? domain.substring(4) : domain;
+		if (domain != null)
+			return domain.startsWith("www.") ? domain.substring(4) : domain;
+		else
+			return null;
 	}
 
 }
