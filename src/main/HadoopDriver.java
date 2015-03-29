@@ -24,10 +24,11 @@ import org.apache.hadoop.util.ToolRunner;
 import data.DataStructureWritable;
 
 public class HadoopDriver extends Configured implements Tool {
+	
+	private static Configuration conf = new Configuration();
 
 	@Override
-	public int run(String[] arg0) throws Exception {
-		Configuration conf = new Configuration();
+	public int run(String[] arg0) throws Exception {		
 		JobConf job = new JobConf(conf, HadoopDriver.class);
 
 		Path in = new Path(arg0[0]);
@@ -57,10 +58,14 @@ public class HadoopDriver extends Configured implements Tool {
 	}
 
 	public static void main(String[] args) throws Exception {
+		if (args[2].equals("1")) {
+			conf.addResource(new Path("/usr/local/hadoop/etc/hadoop/core-site.xml"));
+			conf.addResource(new Path("/usr/local/hadoop/etc/hadoop/hdfs-site.xml"));
+		}
 		String line;
-		ToolRunner.run(new Configuration(), new HadoopDriver(), args);
+		ToolRunner.run(conf, new HadoopDriver(), args);
 		System.out.println("");
-		FileSystem fs = FileSystem.get(new Configuration());
+		FileSystem fs = FileSystem.get(conf);
 		FileStatus[] fss = fs.listStatus(new Path(args[1]));
 		for (FileStatus status : fss) {
 			Path path = status.getPath();
