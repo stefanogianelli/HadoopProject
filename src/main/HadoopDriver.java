@@ -25,6 +25,7 @@ import org.apache.hadoop.mapred.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.jfree.data.category.DefaultCategoryDataset;
+import org.jfree.ui.RefineryUtilities;
 
 import data.DataStructureWritable;
 
@@ -94,6 +95,7 @@ public class HadoopDriver extends Configured implements Tool {
 			}
 			String page_label = "pageviews";
 			String video_label = "video downloads";
+			String referer_label = "referer";
 			for (Map.Entry<String, HashMap<String, Double>> entry : list
 					.entrySet()) {
 				if (entry.getValue().containsKey("page_views")) {
@@ -108,10 +110,18 @@ public class HadoopDriver extends Configured implements Tool {
 				} else {
 					dataset.addValue(0.0, video_label, entry.getKey());
 				}
+				if (entry.getValue().containsKey("referer")) {
+					dataset.addValue(entry.getValue().get("referer")
+							.doubleValue(), referer_label, entry.getKey());
+				} else {
+					dataset.addValue(0.0, referer_label, entry.getKey());
+				}				
 			}
 		}
+		System.out.println("Building graph ...");
 		Graph g = new Graph(dataset);
 		g.pack();
+		RefineryUtilities.centerFrameOnScreen(g);		
 		g.setVisible(true);
 		g.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 	}

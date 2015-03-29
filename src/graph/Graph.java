@@ -13,7 +13,7 @@ public class Graph extends JFrame {
 	private static final long serialVersionUID = 1L;
 	private static String title = "Andamento";
 	private String x_axis_label = "Data";
-	private String y_axis_label = "";
+	private String y_axis_label = "Valore";
 
 	public Graph(CategoryDataset dataset) {
 		super(title);
