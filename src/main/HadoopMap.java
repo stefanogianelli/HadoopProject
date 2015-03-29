@@ -24,6 +24,8 @@ public class HadoopMap extends MapReduceBase implements
 	private final static int NUM_FIELDS = 9;
 	private final static String logPattern = "^([\\d.]+) (\\S+) (\\S+) \\[([\\w:/]+\\s[+\\-]\\d{4})\\] \"(.+?)\" (\\d{3}) (\\d+) \"([^\"]+)\" \"([^\"]+)\"";
 	private Pattern p = Pattern.compile(logPattern);
+	private final static String logPatternAlt = "^([\\d.]+) (\\S+) (\\S+) \\[([\\w:/]+\\s[+\\-]\\d{4})\\] \"(.+?)\" (\\d{3}) (\\S+) \"([^\"]+)\" \"([^\"]+)\"";
+	private Pattern p1 = Pattern.compile(logPatternAlt);
 	private String line, domain;
 	private Matcher matcher;
 	private long start = DateUtils.stringToDate("22/Apr/2003");
@@ -36,32 +38,36 @@ public class HadoopMap extends MapReduceBase implements
 		line = value.toString();
 		matcher = p.matcher(line);
 		if (!matcher.matches() || NUM_FIELDS != matcher.groupCount()) {
-			System.err.println("Bad log entry: " + line);
-		} else {
-			long date = DateUtils.stringToDate(matcher.group(4)
-					.substring(0, 11));
-			String element = matcher.group(5);
-			String referer = matcher.group(8).equals("-") ? null : matcher
-					.group(8);
-			if (element.contains("wmv")) {
-				output.collect(new DataStructureWritable(date,
-						"video_downloads"), one);
-				/*if (referer != null && start <= date && date <= end) {
-					output.collect(new DataStructureWritable(date, "referer"),
-							one);
-					try {
-						domain = this.getDomainName(referer);
-					} catch (URISyntaxException e) {
-						domain = null;
-					}
-					if (domain != null)
-						output.collect(new DataStructureWritable(date, domain),
-								one);
-				}*/
-			} else if (element.contains("html")) {
-				output.collect(new DataStructureWritable(date, "page_views"),
-						one);
+			matcher = p1.matcher(line);
+			if (!matcher.matches() || NUM_FIELDS != matcher.groupCount()) {
+				System.err.println("Bad log entry: " + line);
+				return;
 			}
+		}	
+			
+		long date = DateUtils.stringToDate(matcher.group(4)
+				.substring(0, 11));
+		String element = matcher.group(5);
+		String referer = matcher.group(8).equals("-") ? null : matcher
+				.group(8);
+		if (element.contains("wmv")) {
+			output.collect(new DataStructureWritable(date,
+					"video_downloads"), one);
+			/*if (referer != null && start <= date && date <= end) {
+				output.collect(new DataStructureWritable(date, "referer"),
+						one);
+				try {
+					domain = this.getDomainName(referer);
+				} catch (URISyntaxException e) {
+					domain = null;
+				}
+				if (domain != null)
+					output.collect(new DataStructureWritable(date, domain),
+							one);
+			}*/
+		} else if (element.contains("html")) {
+			output.collect(new DataStructureWritable(date, "page_views"),
+					one);
 		}
 	}
 

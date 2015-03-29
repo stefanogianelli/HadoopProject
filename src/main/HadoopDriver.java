@@ -58,7 +58,7 @@ public class HadoopDriver extends Configured implements Tool {
 
 	public static void main(String[] args) throws Exception {
 		String line;
-		int res = ToolRunner.run(new Configuration(), new HadoopDriver(), args);
+		ToolRunner.run(new Configuration(), new HadoopDriver(), args);
 		System.out.println("");
 		FileSystem fs = FileSystem.get(new Configuration());
 		FileStatus[] fss = fs.listStatus(new Path(args[1]));
@@ -79,21 +79,30 @@ public class HadoopDriver extends Configured implements Tool {
 				}
 				line = br.readLine();
 			}
+			int points_num = list.size();
+			double [] pages = new double[points_num];
+			double [] videos = new double[points_num];
+			String [] labels = new String[points_num];
+			int cont = 0;
 			for (Map.Entry<String, HashMap<String,Double>> entry : list.entrySet()) {
-				System.out.println("Data: " + entry.getKey());
-				if (entry.getValue().containsKey("page_views"))
-					System.out.println("Pagine visitate: " + entry.getValue().get("page_views").doubleValue());
-				else
-					System.out.println("Pagine visitate: 0");
-				if (entry.getValue().containsKey("video_downloads"))
-					System.out.println("Video scaricati: " + entry.getValue().get("video_downloads").doubleValue());
-				else
-					System.out.println("Video scaricati: 0");
+				labels[cont] = entry.getKey();
+				if (entry.getValue().containsKey("page_views")) {
+					pages[cont] = entry.getValue().get("page_views").doubleValue();
+				} else {
+					pages[cont] = 0;
+				}
+				if (entry.getValue().containsKey("video_downloads")) {
+					videos[cont] = entry.getValue().get("video_downloads").doubleValue();
+				} else {
+					videos[cont] = 0;
+				}
+				System.out.println("Data: " + labels[cont]);
+				System.out.println("\tPageviews: " + pages[cont]);
+				System.out.println("\tVideo downloads: " + videos[cont]);
+				cont++;
 			}
-		}
-		// Graph g = new Graph();
-		// g.displayGraph(g.makeChart().toURLString());
-		System.exit(res);
+		}	
+		System.exit(0);
 	}
 
 }
