@@ -57,7 +57,7 @@ public class HadoopMap extends MapReduceBase implements
 				if (domain != null)
 					output.collect(new DataStructureWritable(date, domain), one);
 			}
-		} else if (element.contains("html")) {
+		} else {
 			output.collect(new DataStructureWritable(date, "page_views"), one);
 		}
 	}
