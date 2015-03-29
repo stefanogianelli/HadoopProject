@@ -56,8 +56,10 @@ public class DataStructureWritable implements
 			throw new NullPointerException();
 		else if (this.equals(o))
 			return 0;
-		else if (this.getDate().compareTo(o.getDate()) >= 0)
+		else if (this.getDate().compareTo(o.getDate()) == 0)
 			return this.getElement().compareTo(o.getElement());
+		else if (this.getDate().compareTo(o.getDate()) > 0)
+			return 1;
 		else
 			return -1;
 	}
