@@ -66,9 +66,17 @@ public class HadoopDriver extends Configured implements Tool {
 	public static void main(String[] args) throws Exception {
 		if (args[2].equals("1")) {
 			conf.addResource(new Path(
-					"/usr/local/hadoop/etc/hadoop/core-site.xml"));
+					"/usr/local/hadoop/etc/hadoop/core-site.xml")
+			);
 			conf.addResource(new Path(
-					"/usr/local/hadoop/etc/hadoop/hdfs-site.xml"));
+					"/usr/local/hadoop/etc/hadoop/hdfs-site.xml")
+			);
+		    conf.set("fs.hdfs.impl", 
+	            org.apache.hadoop.hdfs.DistributedFileSystem.class.getName()
+	        );
+	        conf.set("fs.file.impl",
+	            org.apache.hadoop.fs.LocalFileSystem.class.getName()
+	        );
 		}
 		String line;
 		ToolRunner.run(conf, new HadoopDriver(), args);
