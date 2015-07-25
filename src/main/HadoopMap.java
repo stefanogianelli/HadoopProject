@@ -22,14 +22,13 @@ public class HadoopMap extends MapReduceBase implements
 
 	private final static IntWritable one = new IntWritable(1);
 	private final static int NUM_FIELDS = 9;
-	private final static String logPattern = "^([\\d.]+) (\\S+) (\\S+) \\[([\\w:/]+\\s[+\\-]\\d{4})\\] \"(.+?)\" (\\d{3}) (\\d+) \"([^\"]+)\" \"([^\"]+)\"";
+	private final static String logPattern = "^([\\d.]+) (\\S+) (\\S+) \\[([\\w:/]+\\s[+\\-]\\d{4})\\] \"(.+?)\" (\\d{3}) (\\S+) \"([^\"]+)\" \"([^\"]+)\"";
 	private Pattern p = Pattern.compile(logPattern);
-	private final static String logPatternAlt = "^([\\d.]+) (\\S+) (\\S+) \\[([\\w:/]+\\s[+\\-]\\d{4})\\] \"(.+?)\" (\\d{3}) (\\S+) \"([^\"]+)\" \"([^\"]+)\"";
-	private Pattern p1 = Pattern.compile(logPatternAlt);
 	private String line, domain;
 	private Matcher matcher;
 	private long start = DateUtils.stringToDate("22/Apr/2003");
 	private long end = DateUtils.stringToDate("30/May/2003");
+	int count = 1;
 
 	@Override
 	public void map(LongWritable key, Text value,
@@ -38,11 +37,8 @@ public class HadoopMap extends MapReduceBase implements
 		line = value.toString();
 		matcher = p.matcher(line);
 		if (!matcher.matches() || NUM_FIELDS != matcher.groupCount()) {
-			matcher = p1.matcher(line);
-			if (!matcher.matches() || NUM_FIELDS != matcher.groupCount()) {
-				System.err.println("Bad log entry: " + line);
-				return;
-			}
+			System.err.println(count++ + ") Bad log entry: " + line);
+			return;
 		}
 
 		long date = DateUtils.stringToDate(matcher.group(4).substring(0, 11));
