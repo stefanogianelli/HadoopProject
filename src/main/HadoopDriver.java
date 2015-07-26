@@ -32,6 +32,12 @@ import data.DataStructureWritable;
 public class HadoopDriver extends Configured implements Tool {
 
 	private static Configuration conf = new Configuration();
+	private static final String page_key = "page_views";
+	private static final String page_label = "pageviews";
+	private static final String video_key = "video_downloads";
+	private static final String video_label = "video downloads";
+	private static final String referer_key = "referrer";
+	private static final String referer_label = "referrer";
 
 	@Override
 	public int run(String[] arg0) throws Exception {
@@ -101,25 +107,23 @@ public class HadoopDriver extends Configured implements Tool {
 				}
 				line = br.readLine();
 			}
-			String page_label = "pageviews";
-			String video_label = "video downloads";
-			String referer_label = "referer";
+
 			for (Map.Entry<String, HashMap<String, Double>> entry : list
 					.entrySet()) {
-				if (entry.getValue().containsKey("page_views")) {
-					dataset.addValue(entry.getValue().get("page_views")
+				if (entry.getValue().containsKey(page_key)) {
+					dataset.addValue(entry.getValue().get(page_key)
 							.doubleValue(), page_label, entry.getKey());
 				} else {
 					dataset.addValue(0.0, page_label, entry.getKey());
 				}
-				if (entry.getValue().containsKey("video_downloads")) {
-					dataset.addValue(entry.getValue().get("video_downloads")
+				if (entry.getValue().containsKey(video_key)) {
+					dataset.addValue(entry.getValue().get(video_key)
 							.doubleValue(), video_label, entry.getKey());
 				} else {
 					dataset.addValue(0.0, video_label, entry.getKey());
 				}
-				if (entry.getValue().containsKey("referer")) {
-					dataset.addValue(entry.getValue().get("referer")
+				if (entry.getValue().containsKey(referer_key)) {
+					dataset.addValue(entry.getValue().get(referer_key)
 							.doubleValue(), referer_label, entry.getKey());
 				} else {
 					dataset.addValue(0.0, referer_label, entry.getKey());
