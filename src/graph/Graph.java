@@ -11,6 +11,9 @@ import org.jfree.data.category.CategoryDataset;
 public class Graph extends JFrame {
 
 	private static final long serialVersionUID = 1L;
+	private static final int width = 1500;
+	private static final int height = 800;
+	
 	private static String title = "Andamento";
 	private String x_axis_label = "Data";
 	private String y_axis_label = "Valore";
@@ -19,7 +22,7 @@ public class Graph extends JFrame {
 		super(title);
 		JFreeChart chart = createChart(dataset);
 		ChartPanel chartPanel = new ChartPanel(chart);
-		chartPanel.setPreferredSize(new java.awt.Dimension(500, 270));
+		chartPanel.setPreferredSize(new java.awt.Dimension(width, height));
 		setContentPane(chartPanel);
 	}
 

@@ -24,6 +24,7 @@ import org.apache.hadoop.mapred.TextInputFormat;
 import org.apache.hadoop.mapred.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.log4j.BasicConfigurator;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.ui.RefineryUtilities;
 
@@ -70,6 +71,7 @@ public class HadoopDriver extends Configured implements Tool {
 	}
 
 	public static void main(String[] args) throws Exception {
+		BasicConfigurator.configure();
 		if (args[2].equals("1")) {
 			conf.addResource(new Path(
 					"/usr/local/hadoop/etc/hadoop/core-site.xml")
