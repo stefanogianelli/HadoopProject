@@ -11,12 +11,23 @@ public class DateUtils {
 	private static String outputPattern = "dd/MM/yyyy";
 	
 	public static long stringToDate (String date) {
+		long result;
 		SimpleDateFormat parser = new SimpleDateFormat(inputPattern);
 		try {
-			return parser.parse(date).getTime();
+			result = parser.parse(date).getTime();
 		} catch (ParseException e) {
-			return -1;
+			result = -1;
 		}
+		if (result == -1) {
+			//try to use the second pattern
+			parser = new SimpleDateFormat(outputPattern);
+			try {
+				result = parser.parse(date).getTime();
+			} catch (ParseException e) {
+				result = -1;
+			}
+		}
+		return result;
 	}
 	
 	public static Day stringToDay (String date) {

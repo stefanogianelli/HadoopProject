@@ -17,10 +17,11 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapred.FileInputFormat;
 import org.apache.hadoop.mapred.FileOutputFormat;
-import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.TextInputFormat;
 import org.apache.hadoop.mapred.TextOutputFormat;
+import org.apache.hadoop.mapred.jobcontrol.Job;
+import org.apache.hadoop.mapreduce.lib.jobcontrol.JobControl;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.log4j.BasicConfigurator;
@@ -44,33 +45,70 @@ public class HadoopDriver extends Configured implements Tool {
 	private static final String video_label = "video downloads";
 	private static final String referrer_key = "referrer";
 	private static final String referrer_label = "referrer";
+	private static final String intermediate = "/starwars/temp";
 
 	@Override
 	public int run(String[] arg0) throws Exception {
-		JobConf job = new JobConf(conf, HadoopDriver.class);
+		JobConf jobConf1 = new JobConf(conf, HadoopDriver.class);
+		jobConf1.setJobName("job1");
 
-		Path in = new Path(arg0[0]);
-		Path out = new Path(arg0[1]);
-		FileInputFormat.setInputPaths(job, in);
-		FileOutputFormat.setOutputPath(job, out);
+		Path in1 = new Path(arg0[0]);
+		Path out1 = new Path(intermediate);
+		FileInputFormat.setInputPaths(jobConf1, in1);
+		FileOutputFormat.setOutputPath(jobConf1, out1);		
 
-		job.setJobName("HadoopProject");
+		jobConf1.setMapperClass(HadoopMap.class);
+		jobConf1.setCombinerClass(HadoopReduce.class);
+		jobConf1.setReducerClass(HadoopReduce.class);
 
-		job.setMapperClass(HadoopMap.class);
-		job.setCombinerClass(HadoopReduce.class);
-		job.setReducerClass(HadoopReduce.class);
+		jobConf1.setInputFormat(TextInputFormat.class);
 
-		job.setInputFormat(TextInputFormat.class);
+		jobConf1.setOutputFormat(TextOutputFormat.class);
+		jobConf1.setOutputKeyClass(DataStructureWritable.class);
+		jobConf1.setOutputValueClass(IntWritable.class);
+		
+		JobConf jobConf2 = new JobConf(conf, HadoopDriver.class);
+		jobConf2.setJobName("job2");
 
-		job.setOutputFormat(TextOutputFormat.class);
-		job.setOutputKeyClass(DataStructureWritable.class);
-		job.setOutputValueClass(IntWritable.class);
+		Path in2 = new Path(intermediate);
+		Path out2 = new Path(arg0[1]);
+		FileInputFormat.setInputPaths(jobConf2, in2);
+		FileOutputFormat.setOutputPath(jobConf2, out2);		
+
+		jobConf2.setMapperClass(ReferrerMap.class);
+		jobConf2.setCombinerClass(ReferrerReduce.class);
+		jobConf2.setReducerClass(ReferrerReduce.class);
+
+		jobConf2.setInputFormat(TextInputFormat.class);
+
+		jobConf2.setOutputFormat(TextOutputFormat.class);
+		jobConf2.setOutputKeyClass(DataStructureWritable.class);
+		jobConf2.setOutputValueClass(IntWritable.class);
 
 		FileSystem fs = FileSystem.get(conf);
-		if (fs.exists(out))
-			fs.delete(out, true);
-
-		JobClient.runJob(job);
+		if (fs.exists(out1))
+			fs.delete(out1, true);
+		if (fs.exists(out2))
+			fs.delete(out2, true);
+		
+        Job job1 = new Job(jobConf1);
+        Job job2 = new Job(jobConf2);
+        JobControl jobControl = new JobControl("HadoopProject");
+        jobControl.addJob(job1);
+        jobControl.addJob(job2);
+        job2.addDependingJob(job1);
+        
+        Thread t = new Thread(jobControl); 
+        t.setDaemon(true);
+        t.start(); 
+                      
+        while (!jobControl.allFinished()) { 
+          try { 
+            Thread.sleep(1000); 
+          } catch (InterruptedException e) { 
+            e.printStackTrace();
+          } 
+        } 
 
 		return 0;
 	}

@@ -58,8 +58,6 @@ public class HadoopMap extends MapReduceBase implements
 					one);
 			//check if the referrer is not null and it is between the start and the end date
 			if (referrer != null && start <= date && date <= end) {
-				//emit output of type "referrer"
-				output.collect(new DataStructureWritable(date, "referrer"), one);
 				//extract the domain of the referrer
 				domain = this.getDomainName(referrer);
 				//check if the domain was correctly detected
