@@ -3,6 +3,8 @@ package utils;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
+import org.jfree.data.time.Day;
+
 public class DateUtils {
 	
 	private static String inputPattern = "dd/MMM/yyyy";
@@ -14,6 +16,15 @@ public class DateUtils {
 			return parser.parse(date).getTime();
 		} catch (ParseException e) {
 			return -1;
+		}
+	}
+	
+	public static Day stringToDay (String date) {
+		SimpleDateFormat parser = new SimpleDateFormat(outputPattern);
+		try {
+			return new Day(parser.parse(date));
+		} catch (ParseException e) {
+			return null;
 		}
 	}
 	

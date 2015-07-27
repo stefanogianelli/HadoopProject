@@ -5,8 +5,7 @@ import javax.swing.JFrame;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
-import org.jfree.chart.plot.PlotOrientation;
-import org.jfree.data.category.CategoryDataset;
+import org.jfree.data.xy.XYDataset;
 
 public class Graph extends JFrame {
 
@@ -15,21 +14,22 @@ public class Graph extends JFrame {
 	private static final int height = 800;
 	
 	private static String title = "Andamento";
-	private String x_axis_label = "Data";
-	private String y_axis_label = "Valore";
+	private String x_axis_label = "Date";
+	private String y_axis_label = "Valori";
 
-	public Graph(CategoryDataset dataset) {
+	public Graph(XYDataset dataset) {
 		super(title);
 		JFreeChart chart = createChart(dataset);
 		ChartPanel chartPanel = new ChartPanel(chart);
+		chartPanel.setFillZoomRectangle(true);
+		chartPanel.setMouseWheelEnabled(true);
 		chartPanel.setPreferredSize(new java.awt.Dimension(width, height));
 		setContentPane(chartPanel);
 	}
 
-	private JFreeChart createChart(CategoryDataset dataset) {
-		JFreeChart chart = ChartFactory.createLineChart(title, x_axis_label,
-				y_axis_label, dataset, PlotOrientation.VERTICAL, true, true,
-				false);
+	private JFreeChart createChart(XYDataset dataset) {
+		JFreeChart chart = ChartFactory.createTimeSeriesChart(title, x_axis_label,
+				y_axis_label, dataset, true, true, false);
 		return chart;
 	}
 

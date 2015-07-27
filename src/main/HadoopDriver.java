@@ -25,8 +25,13 @@ import org.apache.hadoop.mapred.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.log4j.BasicConfigurator;
-import org.jfree.data.category.DefaultCategoryDataset;
+import org.apache.log4j.Level;
+import org.apache.log4j.LogManager;
+import org.jfree.data.time.TimeSeries;
+import org.jfree.data.time.TimeSeriesCollection;
 import org.jfree.ui.RefineryUtilities;
+
+import utils.DateUtils;
 
 import data.DataStructureWritable;
 
@@ -37,8 +42,8 @@ public class HadoopDriver extends Configured implements Tool {
 	private static final String page_label = "pageviews";
 	private static final String video_key = "video_downloads";
 	private static final String video_label = "video downloads";
-	private static final String referer_key = "referrer";
-	private static final String referer_label = "referrer";
+	private static final String referrer_key = "referrer";
+	private static final String referrer_label = "referrer";
 
 	@Override
 	public int run(String[] arg0) throws Exception {
@@ -72,6 +77,8 @@ public class HadoopDriver extends Configured implements Tool {
 
 	public static void main(String[] args) throws Exception {
 		BasicConfigurator.configure();
+		LogManager.getRootLogger().setLevel(Level.INFO);
+		
 		if (args[2].equals("1")) {
 			conf.addResource(new Path(
 					"/usr/local/hadoop/etc/hadoop/core-site.xml")
@@ -88,9 +95,12 @@ public class HadoopDriver extends Configured implements Tool {
 		}
 		String line;
 		ToolRunner.run(conf, new HadoopDriver(), args);
-		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+		//create dataset for the graph		
 		FileSystem fs = FileSystem.get(conf);
 		FileStatus[] fss = fs.listStatus(new Path(args[1]));
+		TimeSeries pageSerie = new TimeSeries(page_label);
+		TimeSeries videoSerie = new TimeSeries(video_label);
+		TimeSeries referrerSerie = new TimeSeries(referrer_label);
 		for (FileStatus status : fss) {
 			Path path = status.getPath();
 			Map<String, HashMap<String, Double>> list = new LinkedHashMap<String, HashMap<String, Double>>();
@@ -113,25 +123,26 @@ public class HadoopDriver extends Configured implements Tool {
 			for (Map.Entry<String, HashMap<String, Double>> entry : list
 					.entrySet()) {
 				if (entry.getValue().containsKey(page_key)) {
-					dataset.addValue(entry.getValue().get(page_key)
-							.doubleValue(), page_label, entry.getKey());
+					pageSerie.add(DateUtils.stringToDay(entry.getKey()), entry.getValue().get(page_key).doubleValue());
 				} else {
-					dataset.addValue(0.0, page_label, entry.getKey());
+					pageSerie.add(DateUtils.stringToDay(entry.getKey()), 0.0);
 				}
 				if (entry.getValue().containsKey(video_key)) {
-					dataset.addValue(entry.getValue().get(video_key)
-							.doubleValue(), video_label, entry.getKey());
+					videoSerie.add(DateUtils.stringToDay(entry.getKey()), entry.getValue().get(video_key).doubleValue());
 				} else {
-					dataset.addValue(0.0, video_label, entry.getKey());
+					videoSerie.add(DateUtils.stringToDay(entry.getKey()), 0.0);
 				}
-				if (entry.getValue().containsKey(referer_key)) {
-					dataset.addValue(entry.getValue().get(referer_key)
-							.doubleValue(), referer_label, entry.getKey());
+				if (entry.getValue().containsKey(referrer_key)) {
+					referrerSerie.add(DateUtils.stringToDay(entry.getKey()), entry.getValue().get(referrer_key).doubleValue());
 				} else {
-					dataset.addValue(0.0, referer_label, entry.getKey());
-				}				
+					referrerSerie.add(DateUtils.stringToDay(entry.getKey()), 0.0);
+				}	
 			}
 		}
+		TimeSeriesCollection dataset = new TimeSeriesCollection();
+		dataset.addSeries(pageSerie);
+		dataset.addSeries(videoSerie);
+		dataset.addSeries(referrerSerie);
 		System.out.println("Building graph ...");
 		Graph g = new Graph(dataset);
 		g.pack();
