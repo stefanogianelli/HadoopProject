@@ -1,5 +1,6 @@
 package main;
 
+import graph.BarChart;
 import graph.Graph;
 
 import java.io.BufferedReader;
@@ -7,8 +8,6 @@ import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
-import javax.swing.JFrame;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -27,9 +26,10 @@ import org.apache.hadoop.util.ToolRunner;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
+import org.jfree.data.category.CategoryDataset;
+import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
-import org.jfree.ui.RefineryUtilities;
 
 import utils.DateUtils;
 
@@ -92,20 +92,26 @@ public class HadoopDriver extends Configured implements Tool {
 	        conf.set("fs.file.impl",
 	            org.apache.hadoop.fs.LocalFileSystem.class.getName()
 	        );
-		}
-		String line;
+		}		
 		ToolRunner.run(conf, new HadoopDriver(), args);
+		System.out.println("Building dataset ...");
+		buildDataset(args[1]);
+		System.out.println("Finish");
+	}
+	
+	private static void buildDataset (String output) throws Exception {
+		String line;
 		//create dataset for the graph		
 		FileSystem fs = FileSystem.get(conf);
-		FileStatus[] fss = fs.listStatus(new Path(args[1]));
+		FileStatus[] fss = fs.listStatus(new Path(output));
 		TimeSeries pageSerie = new TimeSeries(page_label);
 		TimeSeries videoSerie = new TimeSeries(video_label);
 		TimeSeries referrerSerie = new TimeSeries(referrer_label);
+		DefaultCategoryDataset domainsDataset = new DefaultCategoryDataset();
 		for (FileStatus status : fss) {
 			Path path = status.getPath();
 			Map<String, HashMap<String, Double>> list = new LinkedHashMap<String, HashMap<String, Double>>();
-			BufferedReader br = new BufferedReader(new InputStreamReader(
-					fs.open(path)));
+			BufferedReader br = new BufferedReader(new InputStreamReader(fs.open(path)));
 			line = br.readLine();
 			while (line != null) {
 				String[] split = line.split("\t");
@@ -122,32 +128,40 @@ public class HadoopDriver extends Configured implements Tool {
 
 			for (Map.Entry<String, HashMap<String, Double>> entry : list
 					.entrySet()) {
-				if (entry.getValue().containsKey(page_key)) {
-					pageSerie.add(DateUtils.stringToDay(entry.getKey()), entry.getValue().get(page_key).doubleValue());
-				} else {
-					pageSerie.add(DateUtils.stringToDay(entry.getKey()), 0.0);
+				String date = entry.getKey();
+				for (Map.Entry<String, Double> item : entry.getValue().entrySet()) {
+					if (item.getKey().equals(page_key)) {						
+						pageSerie.add(DateUtils.stringToDay(entry.getKey()), item.getValue().doubleValue());
+					} else if (item.getKey().equals(video_key)) {
+						videoSerie.add(DateUtils.stringToDay(entry.getKey()), item.getValue().doubleValue());
+					} else if (item.getKey().equals(referrer_key)) {
+						referrerSerie.add(DateUtils.stringToDay(entry.getKey()), item.getValue().doubleValue());
+					} else {
+						domainsDataset.addValue(item.getValue().doubleValue(), item.getKey(), date);
+					}
 				}
-				if (entry.getValue().containsKey(video_key)) {
-					videoSerie.add(DateUtils.stringToDay(entry.getKey()), entry.getValue().get(video_key).doubleValue());
-				} else {
-					videoSerie.add(DateUtils.stringToDay(entry.getKey()), 0.0);
-				}
-				if (entry.getValue().containsKey(referrer_key)) {
-					referrerSerie.add(DateUtils.stringToDay(entry.getKey()), entry.getValue().get(referrer_key).doubleValue());
-				} else {
-					referrerSerie.add(DateUtils.stringToDay(entry.getKey()), 0.0);
-				}	
 			}
 		}
 		TimeSeriesCollection dataset = new TimeSeriesCollection();
 		dataset.addSeries(pageSerie);
 		dataset.addSeries(videoSerie);
 		dataset.addSeries(referrerSerie);
-		System.out.println("Building graph ...");
+		//create the graphs
+		System.out.println("Building the line chart graph ...");
+		createLineChart(dataset);
+		System.out.println("Building the bar chart graph ...");
+		createBarChart(domainsDataset);
+	}
+	
+	private static void createLineChart (TimeSeriesCollection dataset) {
+		//show the graph
 		Graph g = new Graph(dataset);
-		g.pack();
-		RefineryUtilities.centerFrameOnScreen(g);		
-		g.setVisible(true);
-		g.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		new Thread(g).start();
+	}
+	
+	private static void createBarChart (CategoryDataset dataset) throws Exception {
+		//show the graph
+		BarChart g = new BarChart(dataset);
+		new Thread(g).start();
 	}
 }
